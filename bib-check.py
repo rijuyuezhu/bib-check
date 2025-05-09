@@ -59,7 +59,7 @@ class DblpSearch:
     @staticmethod
     def search(query: str) -> list[dict]:
         results = []
-        options = {"q": query, "format": "json", "h": 100}
+        options = {"q": query, "format": "json", "h": 500}
         r = requests.get(f"{DblpSearch.BASE_URL}?{urlencode(options)}").json()
         hits = r.get("result").get("hits").get("hit")
         if hits is not None:
@@ -107,13 +107,14 @@ class BibConverter:
                 return
             new_entry = lib.entries[0]
             entry.fields = new_entry.fields
+            entry.entry_type = new_entry.entry_type
 
         if "title" not in entry:
             logger.warning("Missing title in entry @ line %d", entry.start_line)
             return
         hits = DblpSearch.search(entry["title"])
         if len(hits) == 0:
-            logger.warning("No hits for `%s` in DBLP @ line %d", entry.start_line)
+            logger.warning("No hits in DBLP @ line %d", entry.start_line)
         elif len(hits) == 1:
             replace_entry(hits[0])
         else:
@@ -134,6 +135,7 @@ class BibConverter:
                     print("Invalid choice, input again")
 
     def ai_help(self, old_name: str, system_prompt: str) -> str:
+        print(f"FROM: {old_name}")
         if not self.ai_client:
             raise ValueError("AI client is not initialized")
         try:
@@ -146,7 +148,7 @@ class BibConverter:
             )
             content = response.choices[0].message.content
             if content:
-                # print(content)
+                print(f"TO  : {content}")
                 return content
             else:
                 logger.warning("AI returned empty response")
@@ -207,7 +209,7 @@ Proceedings of the 29th Symposium on Operating Systems Principles
         fields = []
         for key in required:
             if key not in entry:
-                logger.warning("Missing `%s` in entry @ line %d", key, entry.start_line)
+                logger.warning("Missing `%s` in entry @ line %d of name %s", key, entry.start_line, entry.key)
                 continue
             field = entry.fields_dict[key]
             if self.use_ai:
@@ -224,19 +226,24 @@ Proceedings of the 29th Symposium on Operating Systems Principles
             f"Failed to parse {len(library.failed_blocks)} blocks"
         )
         for entry in library.entries:
-            if entry.entry_type == "article":
+            try:
                 if self.use_dblp:
-                    self.check_dblp(entry)
-                self.convert_article(entry)
-            elif entry.entry_type == "inproceedings":
-                if self.use_dblp:
-                    self.check_dblp(entry)
-                self.convert_inproceedings(entry)
-            else:
+                    if entry.entry_type == "article" or entry.entry_type == "inproceedings":
+                            self.check_dblp(entry)
+
+                if entry.entry_type == "article":
+                    self.convert_article(entry)
+                elif entry.entry_type == "inproceedings":
+                    self.convert_inproceedings(entry)
+                else:
+                    logger.warning(
+                        "Manually check bibentry @ line %d of type %s",
+                        entry.start_line,
+                        entry.entry_type,
+                    )
+            except Exception as e:
                 logger.warning(
-                    "Manually check bibentry @ line %d of type %s",
-                    entry.start_line,
-                    entry.entry_type,
+                    "Failed to convert entry @ line %d: %s", entry.start_line, e
                 )
             bibtexparser.write_file(f_out, library)
 
