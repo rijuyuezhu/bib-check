@@ -1,0 +1,5 @@
+argparse
+bibtexparser==2.0.0b8
+logging
+openai
+requests

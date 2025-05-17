@@ -232,7 +232,7 @@ The requirement is that
 
 Some examples are
 Proceedings of the Tenth International Conference on Learning Representations
-Proceedings of the Advances in Neural Information Processing Systems
+Proceedings of the Thirty-Sixth Annual Conference on Neural Information Processing Systems
 Proceedings of the Twentieth European Conference on Computer Systems
 Proceedings of the Twenty-Ninth Symposium on Operating Systems Principles
 Proceedings of the Twenty-Third {USENIX} Conference on File and Storage Technologies
