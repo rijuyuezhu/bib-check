@@ -42,10 +42,10 @@ def parse_args() -> argparse.Namespace:
         "--ai", action="store_true", help="Use AI to revise some entries"
     )
     parser.add_argument(
-        "--ai-service",
+        "--ai-endpoint",
         type=str,
-        default="deepseek",
-        help="AI service name (default: deepseek)",
+        default="https://api.deepseek.com/v1",
+        help="AI API endpoint (default: https://api.deepseek.com/v1)",
     )
     parser.add_argument(
         "--ai-model",
@@ -53,7 +53,12 @@ def parse_args() -> argparse.Namespace:
         default="deepseek-chat",
         help="AI model name (default: deepseek-chat)",
     )
-    parser.add_argument("--ai-key", type=str, help="API key for the AI service")
+    parser.add_argument(
+        "--ai-key-env",
+        type=str,
+        default="DEEPSEEK_API_KEY",
+        help="Environment variable name containing the API key (default: DEEPSEEK_API_KEY)",
+    )
 
     # dblp
     parser.add_argument(
@@ -101,8 +106,8 @@ class BibConverter:
     def __init__(
         self,
         use_ai: bool = False,
-        ai_service: str | None = None,
-        ai_key: str | None = None,
+        ai_endpoint: str | None = None,
+        ai_key_env: str | None = None,
         ai_model: str | None = None,
         use_dblp: bool = False,
         suppress_type: bool = False,
@@ -110,11 +115,16 @@ class BibConverter:
         self.use_ai = use_ai
         self.ai_client = None
         if use_ai:
-            if not ai_service or not ai_key or not ai_model:
-                raise ValueError("AI requires service, key, and model")
-            self.ai_client = OpenAI(
-                api_key=ai_key, base_url=f"https://api.{ai_service}.com/v1/"
-            )
+            import os
+
+            if not ai_endpoint or not ai_key_env or not ai_model:
+                raise ValueError("AI requires endpoint, key env, and model")
+            api_key = os.environ.get(ai_key_env)
+            if not api_key:
+                raise ValueError(
+                    f"Environment variable '{ai_key_env}' not found or empty"
+                )
+            self.ai_client = OpenAI(api_key=api_key, base_url=ai_endpoint)
             self.ai_model = ai_model
         self.use_dblp = use_dblp
         self.suppress_type = suppress_type
@@ -325,8 +335,8 @@ def main() -> None:
 
     converter = BibConverter(
         use_ai=args.ai,
-        ai_service=args.ai_service,
-        ai_key=args.ai_key,
+        ai_endpoint=args.ai_endpoint,
+        ai_key_env=args.ai_key_env,
         ai_model=args.ai_model,
         use_dblp=args.dblp,
         suppress_type=args.suppress_type,
