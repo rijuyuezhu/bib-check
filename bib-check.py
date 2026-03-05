@@ -97,6 +97,9 @@ class DblpSearch:
                 entry["venue"] = info.get("venue")
                 entry["doi"] = info.get("doi")
                 entry["url"] = info.get("ee")
+                entry["authors"] = [
+                    x.get("text") for x in info.get("authors").get("author")[:2]
+                ]
                 entry["bibtex"] = f"{info.get('url')}" + ".bib"
                 results.append(entry)
         return results
@@ -152,12 +155,15 @@ class BibConverter:
         else:
             # use a CLI to choose
             print(
-                f"\nMultiple hits for {COLOR_GREEN}{entry['title']}{COLOR_NORMAL} in DBLP, please check manually"
+                f"\nMultiple hits for {COLOR_GREEN}{entry['title'].replace('\n', ' ')}{COLOR_NORMAL} in DBLP, please check manually"
+            )
+            print(
+                f"Origin authors: {COLOR_GREEN}{entry['author'][:40].replace('\n', ' ')}{COLOR_NORMAL}, year: {entry['year']}"
             )
             while True:
                 for i, hit in enumerate(hits):
                     print(
-                        f"{i}: {COLOR_CYAN}{hit['title']}{COLOR_NORMAL}, {hit['year']}, {hit['venue']}"
+                        f"{i}: {COLOR_CYAN}{hit['title']}{COLOR_NORMAL};\n  {COLOR_PURPLE}{'; '.join(hit['authors'])}{COLOR_NORMAL}, {hit['year']}, {hit['venue']}"
                     )
                 choice = input(
                     f"Please choose the correct one {COLOR_GREEN}(0-%d){COLOR_NORMAL}: "
