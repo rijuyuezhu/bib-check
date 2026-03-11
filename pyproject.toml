@@ -1,0 +1,23 @@
+[project]
+name = "bib-check"
+version = "0.1.0"
+description = "Automatically convert bibtex to a good-form one"
+authors = [
+    { name = "Wenrui Huang", email = "rijuyuezhuhwr@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "bibtexparser==2.0.0b8",
+    "openai",
+    "requests",
+]
+
+[project.scripts]
+bib-check = "bib_check.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.10.9,<0.11.0"]
+build-backend = "uv_build"
+
+[tool.ruff.lint]
+extend-select = ["I"]
