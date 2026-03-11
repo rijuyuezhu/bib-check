@@ -73,6 +73,11 @@ def parse_args() -> argparse.Namespace:
     )
     return parser.parse_args()
 
+def ensure_to_list(x):
+    if isinstance(x, list):
+        return x
+    else:
+        return [x]
 
 class DblpSearch:
     # The following code in this class is adaptive from
@@ -80,7 +85,7 @@ class DblpSearch:
     #
     # MIT License
     # Copyright (c) 2021,2023 Zhong Zhenyu
-    BASE_URL = "https://dblp.org/search/publ/api"
+    BASE_URL = "https://dblp.uni-trier.de/search/publ/api"
 
     @staticmethod
     def search(query: str) -> list[dict]:
@@ -98,7 +103,7 @@ class DblpSearch:
                 entry["doi"] = info.get("doi")
                 entry["url"] = info.get("ee")
                 entry["authors"] = [
-                    x.get("text") for x in info.get("authors").get("author")[:2]
+                    x.get("text") for x in ensure_to_list(info.get("authors").get("author"))[:2]
                 ]
                 entry["bibtex"] = f"{info.get('url')}" + ".bib"
                 results.append(entry)
@@ -189,7 +194,7 @@ class BibConverter:
             content = response.choices[0].message.content
             if content:
                 print(f"AI revise: {COLOR_CYAN}{old_name}{COLOR_NORMAL}")
-                print(f"        -> {COLOR_CYAN}{content}{COLOR_NORMAL}")
+                print(f"        -> {COLOR_GREEN}{content}{COLOR_NORMAL}")
                 return content
             else:
                 logger.warning("AI returned empty response")
@@ -248,7 +253,7 @@ The requirement is that
 
 Some examples are
 Proceedings of the Tenth International Conference on Learning Representations
-Proceedings of the Thirty-Sixth Annual Conference on Neural Information Processing Systems
+Advances in Neural Information Processing Systems Thirty-Six
 Proceedings of the Twentieth European Conference on Computer Systems
 Proceedings of the Twenty-Ninth Symposium on Operating Systems Principles
 Proceedings of the Twenty-Third {USENIX} Conference on File and Storage Technologies
@@ -319,6 +324,8 @@ Proceedings of the Sixteenth {USENIX} Symposium on Operating Systems Design and 
                         )
             except Exception as e:
                 logger.warning("Failed to convert entry @ key %s: %s", entry.key, e)
+                import traceback
+                traceback.print_exc()
             bibtexparser.write_file(f_out, library)
 
 
