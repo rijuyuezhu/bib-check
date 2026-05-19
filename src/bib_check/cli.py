@@ -10,17 +10,26 @@ from .config import Config
 from .converter import BibConverter
 from .tui import TUI, Action
 
+logger = logging.getLogger(__name__)
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        prog="bib-check", description="Automatically convert bibtex to a good-form one"
+        prog="bib-check",
+        description="Automatically convert bibtex to a good-form one",
     )
-    parser.add_argument("input_bib_file", type=str, help="Path to the input bib file")
+    parser.add_argument(
+        "input_bib_file",
+        type=str,
+        help="Path to the input bib file",
+    )
     parser.add_argument(
         "output_bib_file", type=str, nargs="?", help="Path to the output bib file"
     )
     parser.add_argument(
-        "--ai", action="store_true", help="Use AI to revise some entries"
+        "--ai",
+        action="store_true",
+        help="Use AI to revise some entries",
     )
     parser.add_argument(
         "--ai-endpoint",
@@ -40,9 +49,10 @@ def parse_args() -> argparse.Namespace:
         default="DEEPSEEK_API_KEY",
         help="Environment variable name containing the API key (default: DEEPSEEK_API_KEY)",
     )
-
     parser.add_argument(
-        "--dblp", action="store_true", help="Convert the entry to one on DBLP"
+        "--dblp",
+        action="store_true",
+        help="Convert the entry to one on DBLP",
     )
     parser.add_argument(
         "--dblp-site",

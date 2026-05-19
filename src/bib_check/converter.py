@@ -26,9 +26,23 @@ from .dblp import DblpSearch
 logger = logging.getLogger("bib-check")
 
 
-def _collapse_whitespace(text: str) -> str:
+def _collapse_whitespace(text: object | None) -> str:
     """Replace multiple consecutive whitespace characters with a single space."""
-    return re.sub(r"\s+", " ", text).strip()
+    if text is None:
+        return ""
+    return re.sub(r"\s+", " ", str(text)).strip()
+
+
+def _display_value(value: object | None, default: str = "?") -> str:
+    value = _collapse_whitespace(value)
+    return value or default
+
+
+def _display_authors(authors: object | None) -> str:
+    if not isinstance(authors, list):
+        return "?"
+    names = [_collapse_whitespace(author) for author in authors]
+    return "; ".join(name for name in names if name) or "?"
 
 
 def _has_fzf() -> bool:
@@ -39,8 +53,11 @@ def _fzf_select(hits: list[dict]) -> int | None:
     """Use fzf to select from DBLP hits. Returns index or None if cancelled."""
     lines = []
     for i, hit in enumerate(hits):
-        authors = "; ".join(_collapse_whitespace(a) for a in hit["authors"])
-        line = f"{i}: {_collapse_whitespace(hit['title'])} | {authors}, {hit['year']}, {_collapse_whitespace(hit['venue'])}"
+        authors = _display_authors(hit.get("authors"))
+        line = (
+            f"{i}: {_display_value(hit.get('title'))} | {authors}, "
+            f"{_display_value(hit.get('year'))}, {_display_value(hit.get('venue'))}"
+        )
         lines.append(line)
     input_text = "\n".join(lines)
     try:
@@ -77,11 +94,12 @@ def _fallback_select(hits: list[dict]) -> int | None:
     for i, hit in enumerate(hits):
         print(
             f"  {COLOR_YELLOW}{i:>3}{COLOR_NORMAL}  "
-            f"{COLOR_CYAN}{_collapse_whitespace(hit['title'])}{COLOR_NORMAL}"
+            f"{COLOR_CYAN}{_display_value(hit.get('title'))}{COLOR_NORMAL}"
         )
         print(
-            f"       {COLOR_PURPLE}{'; '.join(_collapse_whitespace(a) for a in hit['authors'])}{COLOR_NORMAL}, "
-            f"{hit['year']}, {COLOR_DIM}{_collapse_whitespace(hit['venue'])}{COLOR_NORMAL}"
+            f"       {COLOR_PURPLE}{_display_authors(hit.get('authors'))}{COLOR_NORMAL}, "
+            f"{_display_value(hit.get('year'))}, "
+            f"{COLOR_DIM}{_display_value(hit.get('venue'))}{COLOR_NORMAL}"
         )
     print()
     while True:

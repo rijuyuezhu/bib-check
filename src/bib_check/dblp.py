@@ -6,6 +6,8 @@ import requests
 
 
 def _ensure_list(x):
+    if x is None:
+        return []
     if isinstance(x, list):
         return x
     return [x]
@@ -30,19 +32,26 @@ class DblpSearch:
         r = resp.json()
         hits = r.get("result", {}).get("hits", {}).get("hit")
         if hits is not None:
-            for hit in hits:
-                info = hit.get("info")
+            for hit in _ensure_list(hits):
+                if not isinstance(hit, dict):
+                    continue
+                info = hit.get("info") or {}
+                url = info.get("url")
+                if not url:
+                    continue
+                authors_info = info.get("authors") or {}
+                authors = []
+                for author in _ensure_list(authors_info.get("author"))[:2]:
+                    if isinstance(author, dict) and author.get("text"):
+                        authors.append(author["text"])
                 entry = {
                     "title": info.get("title"),
                     "year": info.get("year"),
                     "venue": info.get("venue"),
                     "doi": info.get("doi"),
                     "url": info.get("ee"),
-                    "authors": [
-                        x.get("text")
-                        for x in _ensure_list(info.get("authors").get("author"))[:2]
-                    ],
-                    "bibtex": f"{info.get('url')}.bib",
+                    "authors": authors,
+                    "bibtex": f"{url}.bib",
                 }
                 results.append(entry)
         return results
